@@ -44,6 +44,33 @@ function getFirstFile(files, extension) {
   return Array.from(files || []).find((file) => file.name.toLowerCase().endsWith(extension));
 }
 
+async function copyText(text) {
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return;
+    } catch {
+      // Fall back for HTTP/IIS pages where the Clipboard API exists but is blocked.
+    }
+  }
+
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.setAttribute('readonly', '');
+  textarea.style.position = 'fixed';
+  textarea.style.top = '-9999px';
+  textarea.style.left = '-9999px';
+  document.body.appendChild(textarea);
+  textarea.select();
+
+  const copied = document.execCommand('copy');
+  document.body.removeChild(textarea);
+
+  if (!copied) {
+    throw new Error('Unable to copy folder name.');
+  }
+}
+
 export default function RegisterDevice() {
   const folderInputRef = useRef(null);
   const [form, setForm] = useState(initialForm);
@@ -54,6 +81,7 @@ export default function RegisterDevice() {
   const [successName, setSuccessName] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [copyFailed, setCopyFailed] = useState(false);
 
   const pdfFile = getFirstFile(folderFiles, '.pdf');
   const jsonFile = getFirstFile(folderFiles, '.json');
@@ -69,9 +97,16 @@ export default function RegisterDevice() {
   };
 
   const copyFolderName = async () => {
-    await navigator.clipboard.writeText('Scan_Device');
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1600);
+    setCopyFailed(false);
+    try {
+      await copyText('Scan_Device');
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+    } catch {
+      setCopied(false);
+      setCopyFailed(true);
+      window.setTimeout(() => setCopyFailed(false), 2200);
+    }
   };
 
   const handleFolderPick = (event) => {
@@ -194,6 +229,7 @@ export default function RegisterDevice() {
               <code>Scan_Device</code>
               <Clipboard size={15} />
               {copied ? 'Copied' : ''}
+              {copyFailed ? 'Copy failed' : ''}
             </button>
           </li>
           <li><CheckCircle2 size={18} /><span>Download the scanner file above and save it inside the Scan_Device folder.</span></li>

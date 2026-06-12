@@ -1,12 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, Download } from 'lucide-react';
-import axiosClient from '../api/axiosClient.js';
+import axiosClient, { API_BASE_URL } from '../api/axiosClient.js';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
 import { formatDate, formatValue, getDeviceSummary } from '../utils/deviceFormatters.js';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
 function pickArray(...values) {
   return values.find(Array.isArray) || [];

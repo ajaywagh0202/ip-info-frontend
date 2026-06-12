@@ -62,6 +62,20 @@ function getStatusDisplay(value) {
   return null;
 }
 
+function parsePercent(value) {
+  if (value === undefined || value === null || value === '') return null;
+  const number = Number.parseFloat(String(value).replace('%', '').trim());
+  return Number.isFinite(number) ? number : null;
+}
+
+function getUsageTone(value) {
+  const percent = parsePercent(value);
+  if (percent === null) return null;
+  if (percent < 50) return 'green';
+  if (percent <= 85) return 'orange';
+  return 'red';
+}
+
 function getRowStatusRank(row) {
   const statuses = Object.entries(row)
     .filter(([key]) => key !== '__statusRank')
@@ -77,6 +91,13 @@ function StatusValue({ value }) {
   if (!status) return formatValue(value);
 
   return <span className={`status-chip ${status.tone}`}>{status.label}</span>;
+}
+
+function UsageValue({ value }) {
+  const tone = getUsageTone(value);
+  if (!tone) return <StatusValue value={value} />;
+
+  return <span className={`usage-chip ${tone}`}>{formatValue(value)}</span>;
 }
 
 function getValue(source, ...keys) {
@@ -113,7 +134,7 @@ function flattenRow(value, prefix = '') {
   }, {});
 }
 
-function makeTable(title, data, preferredColumns = null) {
+function makeTable(title, data, preferredColumns = null, options = {}) {
   if (!Array.isArray(data) || data.length === 0) return null;
 
   const rows = data
@@ -133,13 +154,16 @@ function makeTable(title, data, preferredColumns = null) {
   return {
     title,
     rowData: rows,
+    rowClassRules: options.rowClassRules,
     columnDefs: columns.map((column) => ({
       colId: column,
       headerName: toFriendlyLabel(column.split('.').at(-1)),
       minWidth: column === 'value' ? 180 : 145,
       flex: 1,
       valueGetter: ({ data: row }) => row?.[column],
-      cellRenderer: ({ value: cellValue }) => <StatusValue value={cellValue} />,
+      cellRenderer: ({ value: cellValue }) => (column.toLowerCase().includes('use_pct')
+        ? <UsageValue value={cellValue} />
+        : <StatusValue value={cellValue} />),
       valueFormatter: ({ value: cellValue }) => formatValue(
         cellValue && typeof cellValue === 'object' ? JSON.stringify(cellValue) : cellValue,
       ),
@@ -164,7 +188,10 @@ function KeyValueSection({ items }) {
   return (
     <dl className="kv-grid compact">
       {items.map(({ label, value }, index) => (
-        <div key={`${label}-${index}`}><dt>{label}</dt><dd><StatusValue value={value} /></dd></div>
+        <div key={`${label}-${index}`}>
+          <dt>{label}</dt>
+          <dd>{label.toLowerCase().includes('use %') ? <UsageValue value={value} /> : <StatusValue value={value} />}</dd>
+        </div>
       ))}
     </dl>
   );
@@ -180,6 +207,7 @@ function DetailTable({ table, defaultColDef }) {
         rowData={table.rowData}
         columnDefs={table.columnDefs}
         defaultColDef={defaultColDef}
+        rowClassRules={table.rowClassRules}
         autoSizeStrategy={{ type: 'fitGridWidth' }}
         rowHeight={46}
         headerHeight={42}
@@ -271,7 +299,13 @@ function DetailModal({ record, onClose }) {
         ['Total Use %', 'total_use_pct', 'totalUsePct'],
       ]),
       tables: [
-        makeTable('Disk Partitions', diskInfo.partitions, ['filesystem', 'mount', 'size', 'used', 'free', 'use_pct']),
+        makeTable('Disk Partitions', diskInfo.partitions, ['filesystem', 'mount', 'size', 'used', 'free', 'use_pct'], {
+          rowClassRules: {
+            'usage-row-green': ({ data }) => getUsageTone(data?.use_pct) === 'green',
+            'usage-row-orange': ({ data }) => getUsageTone(data?.use_pct) === 'orange',
+            'usage-row-red': ({ data }) => getUsageTone(data?.use_pct) === 'red',
+          },
+        }),
       ].filter(Boolean),
     },
     {
@@ -455,7 +489,7 @@ export default function AdminDashboard() {
 
   const logout = () => {
     localStorage.removeItem('adminToken');
-    window.location.href = '/admin/login';
+    window.location.href = '/';
   };
 
   return (

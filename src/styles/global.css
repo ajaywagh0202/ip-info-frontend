@@ -599,6 +599,18 @@ code {
   line-height: 1.25;
 }
 
+.detail-grid-shell .usage-row-green .ag-cell {
+  background: #f0fbf5;
+}
+
+.detail-grid-shell .usage-row-orange .ag-cell {
+  background: #fff8e6;
+}
+
+.detail-grid-shell .usage-row-red .ag-cell {
+  background: #fff1ef;
+}
+
 .status-chip {
   display: inline-flex;
   align-items: center;
@@ -623,6 +635,35 @@ code {
 }
 
 .status-chip.red {
+  color: var(--danger);
+  background: var(--danger-bg);
+  border: 1px solid #ffd1cb;
+}
+
+.usage-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 0.78rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.usage-chip.green {
+  color: var(--success);
+  background: var(--success-bg);
+  border: 1px solid #bce9d4;
+}
+
+.usage-chip.orange {
+  color: var(--warning);
+  background: var(--warning-bg);
+  border: 1px solid #ffe2a0;
+}
+
+.usage-chip.red {
   color: var(--danger);
   background: var(--danger-bg);
   border: 1px solid #ffd1cb;

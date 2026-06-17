@@ -1,11 +1,14 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ShieldCheck } from 'lucide-react';
+import { getAdminProfile, getToken } from '../utils/adminAuth.js';
 import logo from '../assets/indian.png';
 
 export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const isAdmin = location.pathname.startsWith('/admin');
+  const profile = getAdminProfile();
+  const isLoggedInAdmin = isAdmin && getToken() && location.pathname !== '/admin/login';
 
   return (
     <header className="topbar">
@@ -15,17 +18,21 @@ export default function Navbar() {
             <img src={logo} alt="" className="logo-image" />
           </span>
           <span>
-            <strong>Indian Railways IT Cell</strong>
+            <strong>Central Railways IT Cell</strong>
             <small>Secure device inventory</small>
           </span>
         </Link>
 
         <h1 className="portal-title">{isAdmin ? 'Admin Dashboard' : 'Register My Device Portal'}</h1>
 
-        <button className="admin-outline-button" type="button" onClick={() => navigate('/admin/login')}>
-          <ShieldCheck size={16} />
-          Admin
-        </button>
+        {isLoggedInAdmin ? (
+          <div className="admin-welcome">Welcome, {profile.name || 'Admin'} | {profile.dept_name || 'Department'}</div>
+        ) : (
+          <button className="admin-outline-button" type="button" onClick={() => navigate('/admin/login')}>
+            <ShieldCheck size={16} />
+            Admin
+          </button>
+        )}
       </div>
     </header>
   );

@@ -1,38 +1,26 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { CheckCircle2, Clipboard, Download, FolderOpen, Send, TriangleAlert } from 'lucide-react';
 import axiosClient, { API_BASE_URL } from '../api/axiosClient.js';
 import InputField from '../components/InputField.jsx';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
-
-const departments = [
-  'Accounts',
-  'Administration',
-  'Commercial',
-  'Electrical',
-  'Engineering',
-  'Information Technology',
-  'Mechanical',
-  'Medical',
-  'Operating',
-  'Personnel',
-  'Railway Protection Force',
-  'Signal and Telecommunication',
-  'Stores',
-  'Traffic',
-];
+import { formatValue } from '../utils/formatField.js';
 
 const initialForm = {
   name: '',
   phone: '',
   pf_no: '',
-  department: '',
+  dept_code: '',
+  dept_name: '',
   designation: '',
+  device_type: '',
+  dsr_no: '',
+  serial_no: '',
 };
 
 function validate(form) {
   const errors = {};
-  Object.entries(form).forEach(([key, value]) => {
-    if (!String(value).trim()) errors[key] = 'This field is required.';
+  ['name', 'phone', 'pf_no', 'dept_code', 'dept_name', 'designation', 'device_type', 'dsr_no'].forEach((key) => {
+    if (!String(form[key] || '').trim()) errors[key] = 'This field is required.';
   });
   if (form.phone && !/^\d{10}$/.test(form.phone.trim())) {
     errors.phone = 'Phone number must be exactly 10 digits.';
@@ -50,7 +38,7 @@ async function copyText(text) {
       await navigator.clipboard.writeText(text);
       return;
     } catch {
-      // Fall back for HTTP/IIS pages where the Clipboard API exists but is blocked.
+      // Fall back for browsers where Clipboard API exists but is blocked.
     }
   }
 
@@ -74,20 +62,48 @@ async function copyText(text) {
 export default function RegisterDevice() {
   const folderInputRef = useRef(null);
   const [form, setForm] = useState(initialForm);
+  const [departments, setDepartments] = useState([]);
   const [errors, setErrors] = useState({});
+  const [serverError, setServerError] = useState('');
+  const [successPayload, setSuccessPayload] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
   const [folderFiles, setFolderFiles] = useState([]);
   const [folderWarning, setFolderWarning] = useState('');
-  const [serverError, setServerError] = useState('');
-  const [successName, setSuccessName] = useState('');
-  const [submitting, setSubmitting] = useState(false);
   const [copied, setCopied] = useState(false);
   const [copyFailed, setCopyFailed] = useState(false);
 
   const pdfFile = getFirstFile(folderFiles, '.pdf');
   const jsonFile = getFirstFile(folderFiles, '.json');
 
+  useEffect(() => {
+    let active = true;
+    async function loadDepartments() {
+      try {
+        const { data } = await axiosClient.get('/api/departments');
+        const rows = Array.isArray(data) ? data : data?.data || data?.records || [];
+        if (active) setDepartments(rows);
+      } catch (error) {
+        if (active) setServerError(error.friendlyMessage || 'Unable to load departments.');
+      }
+    }
+    loadDepartments();
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const handleChange = (event) => {
     const { name, value } = event.target;
+    if (name === 'department') {
+      const selected = departments.find((department) => String(department.dept_code || department.code) === value);
+      setForm((current) => ({
+        ...current,
+        dept_code: value,
+        dept_name: selected?.deptname || selected?.dept_name || selected?.name || '',
+      }));
+      setErrors((current) => ({ ...current, dept_code: '', dept_name: '' }));
+      return;
+    }
     setForm((current) => ({ ...current, [name]: value }));
     setErrors((current) => ({ ...current, [name]: '' }));
   };
@@ -118,7 +134,8 @@ export default function RegisterDevice() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setServerError('');
-    setSuccessName('');
+    setSuccessPayload(null);
+    setFolderWarning('');
 
     const nextErrors = validate(form);
     setErrors(nextErrors);
@@ -134,21 +151,38 @@ export default function RegisterDevice() {
       setFolderWarning('Required files not found in selected folder. Please run ITC_System_Scanner_V1.exe first.');
       return;
     }
-
+    
     const payload = new FormData();
-    Object.entries(form).forEach(([key, value]) => payload.append(key, value.trim()));
+    payload.append('name', form.name.trim());
+    payload.append('phone', form.phone.trim());
+    payload.append('pf_no', form.pf_no.trim());
+    payload.append('dept_code', form.dept_code.trim());
+    payload.append('dept_name', form.dept_name.trim());
+    payload.append('designation', form.designation.trim());
+    payload.append('device_type', form.device_type.trim());
+    payload.append('dsr_no', form.dsr_no.trim());
+    const serialValue = form.serial_no.trim();
+    if (serialValue) {
+      payload.append('serial_no', serialValue);
+      payload.append('Serial_no', serialValue);
+      payload.append('serial_number', serialValue);
+    }
+    payload.append('department', form.dept_name.trim());
     payload.append('pdf_file', pdfFile);
     payload.append('json_file', jsonFile);
 
     setSubmitting(true);
     try {
-      await axiosClient.post('/api/register', payload, {
+      const { data } = await axiosClient.post('/api/register', payload, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      setSuccessName(form.name.trim());
+      const response = data?.data || data || {};
+      const registrationId = response?._id || response?.id || response?.record_id || `${form.pf_no.trim()}-${form.dsr_no.trim()}`;
+      setSuccessPayload({
+        name: form.name.trim(),
+        registrationId,
+      });
       setForm(initialForm);
-      setFolderFiles([]);
-      if (folderInputRef.current) folderInputRef.current.value = '';
     } catch (error) {
       setServerError(error.friendlyMessage || error.message || 'Unable to submit registration.');
     } finally {
@@ -156,7 +190,7 @@ export default function RegisterDevice() {
     }
   };
 
-  if (successName) {
+  if (successPayload) {
     return (
       <section className="success-page">
         <div className="success-card prominent">
@@ -164,12 +198,12 @@ export default function RegisterDevice() {
             <CheckCircle2 size={34} />
           </div>
           <div>
-            <h1>{successName} - Your device data has been successfully registered!</h1>
+            <h1>Device Registered Successfully!</h1>
             <p>
-              Please manually delete all files from your Scan_Device folder. Browsers cannot delete
-              local files automatically, so this final cleanup must be done by you.
+              Your device has been submitted for IT inventory.
             </p>
-            <button className="primary-button" type="button" onClick={() => setSuccessName('')}>
+            <p>Registration ID: {formatValue(successPayload.registrationId)}</p>
+            <button className="primary-button" type="button" onClick={() => setSuccessPayload(null)}>
               New Registration
             </button>
           </div>
@@ -179,12 +213,12 @@ export default function RegisterDevice() {
   }
 
   return (
-    <form className="registration-stack" onSubmit={handleSubmit} noValidate>
-      <section className="form-card registration-card">
+    <section className="registration-stack">
+      <form className="form-card registration-card registration-card--compact" onSubmit={handleSubmit} noValidate>
         <div>
           <p className="section-kicker">User registration</p>
-          <h2>Submit official device details</h2>
-          <p>Fill every field, download the scanner, run it, then submit the generated files.</p>
+          <h2>Register device</h2>
+          <p>Fill the required details, download the scanner, run it, then submit the generated files.</p>
         </div>
 
         {serverError ? <div className="alert alert-error">{serverError}</div> : null}
@@ -201,67 +235,96 @@ export default function RegisterDevice() {
             inputMode="numeric"
             type="tel"
           />
-          <InputField label="PF No." name="pf_no" required value={form.pf_no} onChange={handleChange} error={errors.pf_no} />
+          <InputField label="Provident Fund No. (PF No.)" name="pf_no" required value={form.pf_no} onChange={handleChange} error={errors.pf_no} />
           <label className="field" htmlFor="field-department">
             <span className="field-label">Department<em>*</em></span>
-            <select id="field-department" name="department" value={form.department} onChange={handleChange} aria-invalid={Boolean(errors.department)}>
+            <select id="field-department" name="department" value={form.dept_code} onChange={handleChange} aria-invalid={Boolean(errors.dept_code || errors.dept_name)}>
               <option value="">Select department</option>
-              {departments.map((department) => <option key={department}>{department}</option>)}
+              {departments.map((department) => (
+                <option key={department.dept_code || department.code || department.deptname} value={department.dept_code || department.code || ''}>
+                  {department.deptname || department.dept_name || department.name}
+                </option>
+              ))}
             </select>
-            {errors.department ? <span className="field-error">{errors.department}</span> : null}
+            {errors.dept_code || errors.dept_name ? <span className="field-error">{errors.dept_code || errors.dept_name}</span> : null}
           </label>
           <InputField label="Designation" name="designation" required value={form.designation} onChange={handleChange} error={errors.designation} />
+          <label className="field" htmlFor="field-device-type">
+            <span className="field-label">Device Type<em>*</em></span>
+            <select id="field-device-type" name="device_type" value={form.device_type} onChange={handleChange} aria-invalid={Boolean(errors.device_type)}>
+              <option value="">Select device type</option>
+              <option>Desktop</option>
+              <option>Laptop</option>
+              <option>Server</option>
+              <option>Printer</option>
+              <option>Network Switch</option>
+              <option>Other</option>
+            </select>
+            {errors.device_type ? <span className="field-error">{errors.device_type}</span> : null}
+          </label>
+          <InputField label="Dead Stock Register No. (DSR No.)" name="dsr_no" required value={form.dsr_no} onChange={handleChange} error={errors.dsr_no} />
+          <InputField
+            label="Serial Number (Optional)"
+            name="serial_no"
+            value={form.serial_no}
+            onChange={handleChange}
+            placeholder="Enter serial number if available"
+          />
         </div>
-      </section>
+        {/* <p className="registration-note">
+          <span aria-hidden="true">i</span>
+          Additional device details (IP address, OS, hardware info) will be captured automatically via the ITC System Scanner.
+        </p> */}
 
-      <button className="download-button" type="button" onClick={handleDownload}>
-        <Download size={22} />
-        Download .exe File
-      </button>
-
-      <section className="instruction-card">
-        <h2>How to Use - Follow These Steps</h2>
-        <ol className="instruction-steps">
-          <li>
-            <CheckCircle2 size={18} />
-            <span>Create a new empty folder on your computer. Name it exactly:</span>
-            <button className="copy-chip" type="button" onClick={copyFolderName} title="Copy folder name">
-              <code>Scan_Device</code>
-              <Clipboard size={15} />
-              {copied ? 'Copied' : ''}
-              {copyFailed ? 'Copy failed' : ''}
-            </button>
-          </li>
-          <li><CheckCircle2 size={18} /><span>Download the scanner file above and save it inside the Scan_Device folder.</span></li>
-          <li><CheckCircle2 size={18} /><span>Open the Scan_Device folder and double-click ITC_System_Scanner_V1.exe to run it.</span></li>
-          <li><CheckCircle2 size={18} /><span>While clicking, ensure the folder path is correct. After the click on the executable, the scanner will launch.</span></li>
-          <li><CheckCircle2 size={18} /><span>After it runs successfully, keep the generated PDF file and JSON file in the same folder before submitting.</span></li>
-        </ol>
-      </section>
-
-      <section className="folder-card">
-        {folderWarning ? <div className="alert alert-warning"><TriangleAlert size={18} />{folderWarning}</div> : null}
-        <input
-          ref={folderInputRef}
-          className="visually-hidden"
-          type="file"
-          webkitdirectory=""
-          multiple
-          onChange={handleFolderPick}
-        />
-        <button className="secondary-button" type="button" onClick={() => folderInputRef.current?.click()}>
-          <FolderOpen size={18} />
-          Select Scan_Device Folder
+        <button className="download-button" type="button" onClick={handleDownload}>
+          <Download size={22} />
+          Download .exe File
         </button>
-        <div className="file-status">
-          <span className={pdfFile ? 'found' : ''}>PDF {pdfFile ? 'found' : 'missing'}</span>
-          <span className={jsonFile ? 'found' : ''}>JSON {jsonFile ? 'found' : 'missing'}</span>
-        </div>
-      </section>
 
-      <button className="primary-button submit-registration" type="submit" disabled={submitting}>
-        {submitting ? <LoadingSpinner label="Submitting" /> : <><Send size={18} /> Submit Registration</>}
-      </button>
-    </form>
+        <section className="instruction-card">
+          <h2>How to Use - Follow These Steps</h2>
+          <ol className="instruction-steps">
+            <li>
+              <CheckCircle2 size={18} />
+              <span>Create a new empty folder on your computer. Name it exactly:</span>
+              <button className="copy-chip" type="button" onClick={copyFolderName} title="Copy folder name">
+                <code>Scan_Device</code>
+                <Clipboard size={15} />
+                {copied ? 'Copied' : ''}
+                {copyFailed ? 'Copy failed' : ''}
+              </button>
+            </li>
+            <li><CheckCircle2 size={18} /><span>Download the scanner file above and save it inside the Scan_Device folder.</span></li>
+            <li><CheckCircle2 size={18} /><span>Open the Scan_Device folder and double-click ITC_System_Scanner_V1.exe to run it.</span></li>
+            <li><CheckCircle2 size={18} /><span>While clicking, ensure the folder path is correct. After the click on the executable, the scanner will launch.</span></li>
+            <li><CheckCircle2 size={18} /><span>After it runs successfully, keep the generated PDF file and JSON file in the same folder before submitting.</span></li>
+          </ol>
+        </section>
+
+        <section className="folder-card">
+          {folderWarning ? <div className="alert alert-warning"><TriangleAlert size={18} />{folderWarning}</div> : null}
+          <input
+            ref={folderInputRef}
+            className="visually-hidden"
+            type="file"
+            webkitdirectory=""
+            multiple
+            onChange={handleFolderPick}
+          />
+          <button className="secondary-button" type="button" onClick={() => folderInputRef.current?.click()}>
+            <FolderOpen size={18} />
+            Select Scan_Device Folder
+          </button>
+          <div className="file-status">
+            <span className={pdfFile ? 'found' : ''}>PDF {pdfFile ? 'found' : 'missing'}</span>
+            <span className={jsonFile ? 'found' : ''}>JSON {jsonFile ? 'found' : 'missing'}</span>
+          </div>
+        </section>
+
+        <button className="primary-button submit-registration" type="submit" disabled={submitting}>
+          {submitting ? <LoadingSpinner label="Submitting..." /> : <><Send size={18} /> Register Device</>}
+        </button>
+      </form>
+    </section>
   );
 }

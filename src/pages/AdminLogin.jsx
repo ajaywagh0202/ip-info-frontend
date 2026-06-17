@@ -4,6 +4,7 @@ import { LockKeyhole, LogIn } from 'lucide-react';
 import axiosClient from '../api/axiosClient.js';
 import InputField from '../components/InputField.jsx';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
+import { saveAdminSession } from '../utils/adminAuth.js';
 import logo from '../assets/indian.png'
 
 export default function AdminLogin() {
@@ -34,8 +35,8 @@ export default function AdminLogin() {
       });
       const token = data?.token || data?.accessToken || data?.jwt;
       if (!token) throw new Error('Login response did not include a token.');
-      localStorage.setItem('adminToken', token);
-      navigate('/admin/dashboard', { replace: true });
+      saveAdminSession(data);
+      navigate('/admin/analytics', { replace: true });
     } catch {
       setError('Invalid credentials');
     } finally {
@@ -48,7 +49,7 @@ export default function AdminLogin() {
       <form className="center-card login-card" onSubmit={handleSubmit} noValidate>
         <div className="login-mark" aria-hidden="true">
           {/* <TrainFront size={30} /> */}
-          <img src={logo} alt="Indian Railways Logo" className="logo-image" />
+          <img src={logo} alt="Central Railways Logo" className="logo-image" />
         </div>
         <p className="section-kicker">
           <LockKeyhole size={16} />

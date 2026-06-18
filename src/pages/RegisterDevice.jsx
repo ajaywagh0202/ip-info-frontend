@@ -256,8 +256,7 @@ export default function RegisterDevice() {
               <option>Desktop</option>
               <option>Laptop</option>
               <option>Server</option>
-              <option>Printer</option>
-              <option>Network Switch</option>
+              <option>NAS Server</option>
               <option>Other</option>
             </select>
             {errors.device_type ? <span className="field-error">{errors.device_type}</span> : null}

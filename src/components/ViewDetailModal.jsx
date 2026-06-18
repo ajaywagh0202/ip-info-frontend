@@ -154,6 +154,28 @@ export default function ViewDetailModal({ record, onClose }) {
 
   const targetIp = getField(record, 'target_ip', 'targetIp', 'ip_address', 'ip');
   const hostname = getField(record, 'hostname');
+
+  const deviceDetails = [
+    { label: 'Dead Stock Register No.', value: getField(record, 'dsr_no', 'dsrNo') },
+    { label: 'Device Type', value: getField(record, 'device_type', 'deviceType') },
+    { label: 'Date of Procurement', value: getField(record, 'date_of_procurement', 'date_of_procurement') },
+    { label: 'Serial No.', value: getField(record, 'Series_no', 'series_no', 'serial_no') },
+    { label: 'Make', value: getField(record, 'make') },
+    { label : 'Date of Installation', value: getField(record, 'date_of_install', 'dateOfInstall') },
+    { label: 'Date', value: getField(record, 'date') },
+    { label: 'description', value: getField(record, 'description') },
+    { label: 'Given To', value: getField(record, 'given_to', 'givenTo') },
+    { label: 'Location', value: getField(record, 'location') },
+    { label: 'Purchase Order  No.', value: getField(record, 'po_no', 'poNo') },
+    { label: 'Purchase Order Date', value: getField(record, 'po_date', 'poDate') },
+    { label: 'Quantity', value: getField(record, 'quanity', 'quantity') },
+    { label: 'Price', value: getField(record, 'value') },
+    { label: 'Dead Stock Register File', value: getField(record, 'dsr_file', 'dsrFile') },
+    { label: 'DS No.', value: getField(record, 'ds_no', 'dsNo') },
+    { label: 'Remarks', value: getField(record, 'remarks') },
+  ];
+
+
   const userInfo = [
     { label: 'Name', value: getField(record, 'name') },
     { label: 'Phone', value: getField(record, 'phone') },
@@ -161,18 +183,14 @@ export default function ViewDetailModal({ record, onClose }) {
     { label: 'Department', value: getField(record, 'dept_name', 'deptName', 'department') },
     { label: 'Designation', value: getField(record, 'designation') },
     { label: 'Target IP', value: targetIp },
-    { label: 'Device Type', value: getField(record, 'device_type', 'deviceType') },
-    { label: 'Date of Procurement', value: getField(record, 'date_of_procurement', 'dateOfProcurement') },
-    { label: 'DSR No.', value: getField(record, 'dsr_no', 'dsrNo') },
-    { label: 'Series No.', value: getField(record, 'Series_no', 'series_no', 'serial_no') },
   ];
 
   const systemInfo = [
     { label: 'Target IP', value: targetIp },
     { label: 'Hostname', value: hostname },
-    { label: 'OS', value: getField(record, 'os', 'distro', 'platform') },
-    { label: 'OS Version', value: getField(record, 'os_version', 'osVersion') },
-    { label: 'OS Release', value: getField(record, 'os_release', 'osRelease') },
+    { label: 'Operating System', value: getField(record, 'os', 'distro', 'platform') },
+    { label: 'Operating System Version', value: getField(record, 'os_version', 'osVersion') },
+    { label: 'Operating System Release', value: getField(record, 'os_release', 'osRelease') },
     { label: 'Architecture', value: getField(record, 'architecture') },
     { label: 'Distro', value: getField(record, 'distro') },
     { label: 'Python Version', value: getField(record, 'python_version', 'pythonVersion') },
@@ -192,8 +210,9 @@ export default function ViewDetailModal({ record, onClose }) {
   const runningServices = jsonData.running_services || jsonData.runningServices || null;
 
   const sections = [
-    { title: 'User Details', items: userInfo, index: '01' },
-    { title: 'System Details', items: systemInfo, index: '02' },
+    { title: 'Device Details', items: deviceDetails, index: '01' },
+    { title: 'User Details', items: userInfo, index: '02' },
+    { title: 'System Details', items: systemInfo, index: '03' },
   ];
 
   const scalarHealth = systemHealth ? [
@@ -215,7 +234,7 @@ export default function ViewDetailModal({ record, onClose }) {
     sections.push({
       title: 'System Health',
       items: scalarHealth,
-      index: '03',
+      index: '04',
       tables: [
         makeTable('Top Processes', systemHealth.top_processes || systemHealth.topProcesses, ['pid', 'name', 'cpu', 'memory']),
       ].filter(Boolean),

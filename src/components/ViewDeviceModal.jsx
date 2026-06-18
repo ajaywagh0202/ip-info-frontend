@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import axiosInstance from '../utils/axiosInstance.js';
@@ -84,7 +84,7 @@ export default function ViewDeviceModal({ deviceId, initialRecord, onClose }) {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [onClose]);
 
-  const jsonData = useMemo(() => getJsonData(record), [record]);
+  const jsonData = getJsonData(record);
   const user = [
     { key: 'name', label: formatFieldKey('name'), value: record?.name },
     { key: 'phone', label: formatFieldKey('phone'), value: record?.phone },
@@ -145,7 +145,7 @@ export default function ViewDeviceModal({ deviceId, initialRecord, onClose }) {
               <DetailSection title="Device Information" items={device} />
               <DetailSection title="Purchase Order (PO) Details" items={po} />
               <DetailSection title="Deployment Details" items={deployment} />
-              {/* {jsonData && Object.keys(jsonData).length ? (
+              {jsonData && Object.keys(jsonData).length ? (
                 <section className="device-section">
                   <h3>Scanner Data</h3>
                   <dl className="device-detail-grid">
@@ -159,7 +159,7 @@ export default function ViewDeviceModal({ deviceId, initialRecord, onClose }) {
                       ))}
                   </dl>
                 </section>
-              ) : null} */}
+              ) : null}
             </>
           ) : null}
         </div>

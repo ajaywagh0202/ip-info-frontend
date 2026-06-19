@@ -141,16 +141,16 @@ export default function RegisterDevice() {
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) return;
 
-    if (!folderFiles.length) {
-      folderInputRef.current?.click();
-      setFolderWarning('Please select your Scan_Device folder before submitting.');
-      return;
-    }
+    // if (!folderFiles.length) {
+    //   folderInputRef.current?.click();
+    //   setFolderWarning('Please select your Scan_Device folder before submitting.');
+    //   return;
+    // }
 
-    if (!pdfFile || !jsonFile) {
-      setFolderWarning('Required files not found in selected folder. Please run ITC_System_Scanner_V1.exe first.');
-      return;
-    }
+    // if (!pdfFile || !jsonFile) {
+    //   setFolderWarning('Required files not found in selected folder. Please run ITC_System_Scanner_V1.exe first.');
+    //   return;
+    // }
     
     const payload = new FormData();
     payload.append('name', form.name.trim());
@@ -168,20 +168,27 @@ export default function RegisterDevice() {
       payload.append('serial_number', serialValue);
     }
     payload.append('department', form.dept_name.trim());
-    payload.append('pdf_file', pdfFile);
-    payload.append('json_file', jsonFile);
+    // payload.append('pdf_file', pdfFile);
+    // payload.append('json_file', jsonFile);
 
     setSubmitting(true);
     try {
-      const { data } = await axiosClient.post('/api/register', payload, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      const response = data?.data || data || {};
-      const registrationId = response?._id || response?.id || response?.record_id || `${form.pf_no.trim()}-${form.dsr_no.trim()}`;
-      setSuccessPayload({
-        name: form.name.trim(),
-        registrationId,
-      });
+
+      const encoded = encodeURIComponent(JSON.stringify(form));
+
+      window.location.href = `http://10.31.3.114:5051/?data=${encoded}`;
+
+      // const { data } = await axiosClient.post('/api/register', payload, {
+      //   headers: { 'Content-Type': 'multipart/form-data' },
+      // });
+      // const response = data?.data || data || {};
+      // const registrationId = response?._id || response?.id || response?.record_id || `//${form.pf_no.trim()}-${form.dsr_no.trim()}`;
+      // setSuccessPayload({
+      //   name: form.name.trim(),
+      //   registrationId,
+      // });
+
+      // window.location.href = 'http://10.31.3.114:5051/';
       setForm(initialForm);
     } catch (error) {
       setServerError(error.friendlyMessage || error.message || 'Unable to submit registration.');
@@ -275,10 +282,10 @@ export default function RegisterDevice() {
           Additional device details (IP address, OS, hardware info) will be captured automatically via the ITC System Scanner.
         </p> */}
 
-        <button className="download-button" type="button" onClick={handleDownload}>
+        {/* <button className="download-button" type="button" onClick={handleDownload}>
           <Download size={22} />
           Download .exe File
-        </button>
+        </button> */}
 
         <section className="instruction-card">
           <h2>How to Use - Follow These Steps</h2>
@@ -300,7 +307,7 @@ export default function RegisterDevice() {
           </ol>
         </section>
 
-        <section className="folder-card">
+        {/* <section className="folder-card">
           {folderWarning ? <div className="alert alert-warning"><TriangleAlert size={18} />{folderWarning}</div> : null}
           <input
             ref={folderInputRef}
@@ -318,7 +325,7 @@ export default function RegisterDevice() {
             <span className={pdfFile ? 'found' : ''}>PDF {pdfFile ? 'found' : 'missing'}</span>
             <span className={jsonFile ? 'found' : ''}>JSON {jsonFile ? 'found' : 'missing'}</span>
           </div>
-        </section>
+        </section> */}
 
         <button className="primary-button submit-registration" type="submit" disabled={submitting}>
           {submitting ? <LoadingSpinner label="Submitting..." /> : <><Send size={18} /> Register Device</>}

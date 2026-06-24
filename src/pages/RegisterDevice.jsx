@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
-import { CheckCircle2, Clipboard, Download, FolderOpen, Send, TriangleAlert } from 'lucide-react';
-import axiosClient, { API_BASE_URL } from '../api/axiosClient.js';
+import { useEffect, useState } from 'react';
+import { CheckCircle2, Clipboard, Send } from 'lucide-react';
+import axiosClient from '../api/axiosClient.js';
 import InputField from '../components/InputField.jsx';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
 import { formatValue } from '../utils/formatField.js';
@@ -26,10 +26,6 @@ function validate(form) {
     errors.phone = 'Phone number must be exactly 10 digits.';
   }
   return errors;
-}
-
-function getFirstFile(files, extension) {
-  return Array.from(files || []).find((file) => file.name.toLowerCase().endsWith(extension));
 }
 
 async function copyText(text) {
@@ -60,20 +56,14 @@ async function copyText(text) {
 }
 
 export default function RegisterDevice() {
-  const folderInputRef = useRef(null);
   const [form, setForm] = useState(initialForm);
   const [departments, setDepartments] = useState([]);
   const [errors, setErrors] = useState({});
   const [serverError, setServerError] = useState('');
   const [successPayload, setSuccessPayload] = useState(null);
   const [submitting, setSubmitting] = useState(false);
-  const [folderFiles, setFolderFiles] = useState([]);
-  const [folderWarning, setFolderWarning] = useState('');
   const [copied, setCopied] = useState(false);
   const [copyFailed, setCopyFailed] = useState(false);
-
-  const pdfFile = getFirstFile(folderFiles, '.pdf');
-  const jsonFile = getFirstFile(folderFiles, '.json');
 
   useEffect(() => {
     let active = true;
@@ -108,10 +98,6 @@ export default function RegisterDevice() {
     setErrors((current) => ({ ...current, [name]: '' }));
   };
 
-  const handleDownload = () => {
-    window.location.href = `${API_BASE_URL}/api/download/scanner`;
-  };
-
   const copyFolderName = async () => {
     setCopyFailed(false);
     try {
@@ -125,17 +111,10 @@ export default function RegisterDevice() {
     }
   };
 
-  const handleFolderPick = (event) => {
-    const files = Array.from(event.target.files || []);
-    setFolderFiles(files);
-    setFolderWarning('');
-  };
-
   const handleSubmit = async (event) => {
     event.preventDefault();
     setServerError('');
     setSuccessPayload(null);
-    setFolderWarning('');
 
     const nextErrors = validate(form);
     setErrors(nextErrors);
@@ -248,7 +227,7 @@ export default function RegisterDevice() {
             <select id="field-department" name="department" value={form.dept_code} onChange={handleChange} aria-invalid={Boolean(errors.dept_code || errors.dept_name)}>
               <option value="">Select department</option>
               {departments.map((department) => (
-                <option key={department.dept_code || department.code || department.deptname} value={department.dept_code || department.code || ''}>
+                <option key={department.dept_code || department.code || department.deptname} value={department.deptname ||  ''}>
                   {department.deptname || department.dept_name || department.name}
                 </option>
               ))}

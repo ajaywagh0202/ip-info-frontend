@@ -18,6 +18,21 @@ function getUserId(user) {
   return user?.id || user?._id || user?.user_id;
 }
 
+function getDepartmentValue(department) {
+  return String(
+    department?.dept_code
+    || department?.code
+    || department?.dept_name
+    || department?.deptname
+    || department?.name
+    || '',
+  );
+}
+
+function getDepartmentName(department) {
+  return department?.deptname || department?.dept_name || department?.name || department?.dept_code || department?.code || '';
+}
+
 function makeInitialForm(profile) {
   const superUser = Number(profile.user_type) === 0;
   return {
@@ -59,8 +74,8 @@ function UserForm({
               <option value="">Select department</option>
             )}
             {departments.map((department) => (
-              <option key={department.dept_code || department.code || department.deptname} value={department.dept_code || department.code || ''}>
-                {department.deptname || department.dept_name || department.name}
+              <option key={getDepartmentValue(department)} value={getDepartmentValue(department)}>
+                {getDepartmentName(department)}
               </option>
             ))}
           </select>
@@ -134,11 +149,12 @@ export default function AdminUsers() {
   const updateForm = (setter) => (event) => {
     const { name, value } = event.target;
     if (name === 'department') {
-      const dept = departments.find((item) => String(item.dept_code || item.code) === value);
+      const dept = departments.find((item) => getDepartmentValue(item) === value);
+      console.log('Selected department:', dept);
       setter((current) => ({
         ...current,
         dept_code: value,
-        dept_name: dept?.deptname || dept?.dept_name || dept?.name || '',
+        dept_name: getDepartmentName(dept),
       }));
       return;
     }

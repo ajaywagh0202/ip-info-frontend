@@ -23,7 +23,7 @@ export default function Navbar() {
           </span>
         </Link>
 
-        <h1 className="portal-title">{isAdmin ? 'Admin Dashboard' : 'Register My Device Portal'}</h1>
+        <h1 className="portal-title">{isAdmin ? 'Admin Dashboard' : 'ITC System Scanner Portal'}</h1>
 
         {isLoggedInAdmin ? (
           <div className="admin-welcome">Welcome, {profile.name || 'Admin'} | {profile.dept_name || 'Department'}</div>

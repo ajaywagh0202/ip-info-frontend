@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar.jsx';
-import RegisterDevice from './pages/RegisterDevice.jsx';
+import IpServiceSubPlatform from './pages/IpServiceSubPlatform.jsx';
+import DeviceRegistrationAssignment from './pages/DeviceRegistrationAssignment.jsx';
 import AdminLogin from './pages/AdminLogin.jsx';
 import AdminLayout from './components/AdminLayout.jsx';
 import { ProtectedRoute } from './components/ProtectedRoute.jsx';
@@ -28,7 +29,9 @@ export default function App() {
       {showTopNavbar ? <Navbar /> : null}
       <main className={showTopNavbar ? 'page-container' : 'admin-page-container'}>
         <Routes>
-          <Route path="/" element={<RegisterDevice />} />
+          <Route path="/" element={<DeviceRegistrationAssignment />} />
+          <Route path="/ip-service" element={<DeviceRegistrationAssignment />} />
+          <Route path="/ip-service/scan" element={<IpServiceSubPlatform />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route
             path="/admin/ip-report"

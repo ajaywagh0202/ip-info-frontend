@@ -156,23 +156,13 @@ export default function ViewDetailModal({ record, onClose }) {
   const hostname = getField(record, 'hostname');
 
   const deviceDetails = [
+    { label: 'Serial No.', value: getField(record, 'Series_no', 'series_no', 'serial_no') },
     { label: 'Dead Stock Register No.', value: getField(record, 'dsr_no', 'dsrNo') },
     { label: 'Device Type', value: getField(record, 'device_type', 'deviceType') },
-    { label: 'Date of Procurement', value: getField(record, 'date_of_procurement', 'date_of_procurement') },
-    { label: 'Serial No.', value: getField(record, 'Series_no', 'series_no', 'serial_no') },
-    { label: 'Make', value: getField(record, 'make') },
-    { label : 'Date of Installation', value: getField(record, 'date_of_install', 'dateOfInstall') },
-    { label: 'Date', value: getField(record, 'date') },
-    { label: 'description', value: getField(record, 'description') },
-    { label: 'Given To', value: getField(record, 'given_to', 'givenTo') },
-    { label: 'Location', value: getField(record, 'location') },
     { label: 'Purchase Order  No.', value: getField(record, 'po_no', 'poNo') },
     { label: 'Purchase Order Date', value: getField(record, 'po_date', 'poDate') },
-    { label: 'Quantity', value: getField(record, 'quanity', 'quantity') },
-    { label: 'Price', value: getField(record, 'value') },
-    { label: 'Dead Stock Register File', value: getField(record, 'dsr_file', 'dsrFile') },
-    { label: 'DS No.', value: getField(record, 'ds_no', 'dsNo') },
-    { label: 'Remarks', value: getField(record, 'remarks') },
+    { label: 'Date of Procurement', value: getField(record, 'date_of_procurement', 'date_of_procurement') },
+    { label: 'Make', value: getField(record, 'make') },
   ];
 
 

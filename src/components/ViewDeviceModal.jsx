@@ -91,6 +91,7 @@ export default function ViewDeviceModal({ deviceId, initialRecord, onClose }) {
     { key: 'pf_no', label: formatFieldKey('pf_no'), value: record?.pf_no },
     { key: 'dept_name', label: formatFieldKey('dept_name'), value: record?.dept_name },
     { key: 'designation', label: formatFieldKey('designation'), value: record?.designation },
+    { key: 'section_office', label: formatFieldKey('section_office'), value: record?.section_office },
     { key: 'submitted_at', label: formatFieldKey('submitted_at'), value: record?.submitted_at },
   ];
   const device = [
@@ -101,25 +102,28 @@ export default function ViewDeviceModal({ deviceId, initialRecord, onClose }) {
   ];
   const dsr = [
     { key: 'dsr_no', label: formatFieldKey('dsr_no'), value: record?.dsr_no },
-    { key: 'Serial_no', label: formatFieldKey('Serial_no'), value: record?.Serial_no || record?.serial_number },
+    { key: 'given_to', label: formatFieldKey('given_to'), value: record?.name },
+    { key: 'location', label: formatFieldKey('location'), value: record?.section_office || record?.location },
+    { key: 'date_of_install', label: formatFieldKey('date_of_install'), value: record?.date_of_install },
     { key: 'description', label: formatFieldKey('description'), value: record?.description },
-    { key: 'make', label: formatFieldKey('make'), value: record?.make },
-    { key: 'quantity', label: formatFieldKey('quantity'), value: record?.quantity },
-    { key: 'ds_no', label: formatFieldKey('ds_no'), value: record?.ds_no },
-    { key: 'date', label: formatFieldKey('date'), value: record?.date },
     { key: 'dsr_file', label: formatFieldKey('dsr_file'), value: record?.dsr_file },
   ];
   const po = [
+    { key: 'Serial_no', label: formatFieldKey('Serial_no'), value: record?.Serial_no || record?.serial_number },
     { key: 'po_no', label: formatFieldKey('po_no'), value: record?.po_no },
     { key: 'po_date', label: formatFieldKey('po_date'), value: record?.po_date },
+    { key: 'make', label: formatFieldKey('make'), value: record?.make },
+    { key: 'quantity', label: formatFieldKey('quantity'), value: record?.quantity },
     { key: 'value', label: formatFieldKey('value'), value: record?.value },
     { key: 'date_of_procurement', label: formatFieldKey('date_of_procurement'), value: record?.date_of_procurement },
   ];
   const deployment = [
-    { key: 'given_to', label: formatFieldKey('given_to'), value: record?.given_to },
-    { key: 'location', label: formatFieldKey('location'), value: record?.location },
-    { key: 'date_of_install', label: formatFieldKey('date_of_install'), value: record?.date_of_install },
     { key: 'remarks', label: formatFieldKey('remarks'), value: record?.remarks },
+  ];
+
+  const ds = [
+    { key: 'ds_no', label: formatFieldKey('ds_no'), value: record?.ds_no },
+    { key: 'date', label: formatFieldKey('date'), value: record?.date },
   ];
 
   return createPortal(
@@ -140,12 +144,13 @@ export default function ViewDeviceModal({ deviceId, initialRecord, onClose }) {
           {error ? <div className="alert alert-error">{error}</div> : null}
           {!loading && record ? (
             <>
-              <DetailSection title="Dead Stock Register (DSR) Details" items={dsr} />
               <DetailSection title="User Information" items={user} />
-              <DetailSection title="Device Information" items={device} />
               <DetailSection title="Purchase Order (PO) Details" items={po} />
+              <DetailSection title="Dead Stock Register (DSR) Details" items={dsr} />
+              <DetailSection title="Device Information" items={device} />
+              <DetailSection title="DS-8 Details" items={ds} />
               <DetailSection title="Deployment Details" items={deployment} />
-              {jsonData && Object.keys(jsonData).length ? (
+              {/* {jsonData && Object.keys(jsonData).length ? (
                 <section className="device-section">
                   <h3>Scanner Data</h3>
                   <dl className="device-detail-grid">
@@ -159,7 +164,7 @@ export default function ViewDeviceModal({ deviceId, initialRecord, onClose }) {
                       ))}
                   </dl>
                 </section>
-              ) : null}
+              ) : null} */}
             </>
           ) : null}
         </div>

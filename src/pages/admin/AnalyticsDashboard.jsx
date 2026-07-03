@@ -171,7 +171,7 @@ export default function AnalyticsDashboard() {
           </div>
 
           <div className="analytics-chart-grid">
-            <ChartCard title="OS Distribution" hasData={osData.length > 0}>
+            <ChartCard title="Operating System Distribution" hasData={osData.length > 0}>
               <ResponsiveContainer width="100%" height={320}>
                 <PieChart>
                   <Pie data={osData} dataKey="count" nameKey="os" cx="50%" cy="48%" innerRadius={62} outerRadius={100}>

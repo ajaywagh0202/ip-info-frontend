@@ -12,6 +12,10 @@ function getDeviceId(record) {
   return record?.id || record?._id || record?.device_id || record?.record_id;
 }
 
+function serial_no(record) {
+  return record?.Serial_no || record?.serial_number || record?.SerialNumber || record?.serialNo || '';
+}
+
 function toDateInput(value) {
   if (!value) return '';
   const date = new Date(value);
@@ -172,10 +176,7 @@ export default function EditDeviceModal({ deviceId, initialRecord, departments =
   const submit = async (event) => {
     event.preventDefault();
     setServerError('');
-    if (!form?.name?.trim() || !form?.phone?.trim() || !/^\d{10}$/.test(form.phone.trim()) || !form?.pf_no?.trim() || !form?.dept_code?.trim() || !form?.designation?.trim()) {
-      setServerError('Please complete all required fields.');
-      return;
-    }
+    
 
     const diff = buildDiff(form, original);
     if (!Object.keys(diff).length) {
@@ -185,7 +186,7 @@ export default function EditDeviceModal({ deviceId, initialRecord, departments =
 
     setSaving(true);
     try {
-      const { data } = await axiosInstance.put(`/api/admin/device-details/${getDeviceId(record)}`, diff);
+      const { data } = await axiosInstance.put(`/api/admin/device-details/serial_no:${serial_no(record)}`, diff);
       const updated = data?.data || data || {};
       onSaved?.({
         ...record,
@@ -207,32 +208,33 @@ export default function EditDeviceModal({ deviceId, initialRecord, departments =
         <Grid>
           <InputField label={formatFieldKey('name')} name="name" required value={form?.name || ''} onChange={update} disabled={true} />
           <InputField label={formatFieldKey('phone')} name="phone" required value={form?.phone || ''} onChange={update} type="tel" disabled={true} />
-          <InputField label={formatFieldKey('pf_no')} name="pf_no" required value={form?.pf_no || ''} onChange={update}  disabled={true}/>
-          <label className="field" htmlFor="device-dept_code">
-            <span className="field-label">{formatFieldKey('dept_name')}<em>*</em></span>
-            <select id="device-dept_code" name="dept_code" value={form?.dept_code || ''} onChange={updateDepartment} disabled={true}>
-              <option value="">Select department</option>
-              {departments.map((department) => (
-                <option key={department.dept_code || department.code || department.deptname} value={department.dept_code || department.code || ''}>
-                  {department.deptname || department.dept_name || department.name}
-                </option>
-              ))}
-            </select>
-          </label>
+          <InputField label={formatFieldKey('pf_no')} name="pf_no" required value={form?.pf_no || ''} onChange={update} disabled={true} />
+          <InputField label={formatFieldKey('dept_name')} name="dept_name" required value={form?.dept_name || ''} onChange={update} disabled={true} />
           <InputField label={formatFieldKey('designation')} name="designation" required value={form?.designation || ''} onChange={update} disabled={true} />
+        </Grid>
+      </Section>
+    ),
+    (
+      <Section title="PO Details" key="po">
+        <Grid>
+          <InputField label={formatFieldKey('Serial_no')} name="Serial_no" value={form?.Serial_no || ''} onChange={update} disabled={true} />
+          <InputField label={formatFieldKey('po_no')} name="po_no" value={form?.po_no || ''} onChange={update} />
+          <InputField label={formatFieldKey('po_date')} name="po_date" type="date" value={form?.po_date || ''} onChange={update} />
+          <InputField label={formatFieldKey('make')} name="make" value={form?.make || ''} onChange={update} />
+          <InputField label={formatFieldKey('quantity')} name="quantity" type="number" min="0" value={form?.quantity ?? ''} onChange={update} />
+          <InputField label={formatFieldKey('value')} name="value" value={form?.value || ''} onChange={update} />
+          <InputField label={formatFieldKey('date_of_procurement')} name="date_of_procurement" type="date" value={form?.date_of_procurement || ''} onChange={update} />
         </Grid>
       </Section>
     ),
     (
       <Section title="DSR Details" key="dsr">
         <Grid>
-          <InputField label={formatFieldKey('dsr_no')} name="dsr_no" value={form?.dsr_no || ''} onChange={update} />
-          <InputField label={formatFieldKey('Serial_no')} name="Serial_no" value={form?.Serial_no || ''} onChange={update} />
+          <InputField label={formatFieldKey('dsr_no')} name="dsr_no" value={form?.dsr_no || ''} onChange={update} disabled={true} />
+          <InputField label={formatFieldKey('Issued To')} name="given_to" value={form?.name || ''} onChange={update} disabled={true} />
+          <InputField label={formatFieldKey('location')} name="location" value={form?.location || ''} onChange={update}  />
+          <InputField label={formatFieldKey('date_of_install')} name="date_of_install" type="date" value={form?.date_of_install || ''} onChange={update} />
           <TextAreaField label={formatFieldKey('description')} name="description" value={form?.description || ''} onChange={update} rows={3} />
-          <InputField label={formatFieldKey('make')} name="make" value={form?.make || ''} onChange={update} />
-          <InputField label={formatFieldKey('quantity')} name="quantity" type="number" min="0" value={form?.quantity ?? ''} onChange={update} />
-          <InputField label={formatFieldKey('ds_no')} name="ds_no" value={form?.ds_no || ''} onChange={update} />
-          <InputField label={formatFieldKey('date')} name="date" type="date" value={form?.date || ''} onChange={update} />
           <InputField label={formatFieldKey('dsr_file')} name="dsr_file" value={form?.dsr_file || ''} onChange={update} />
         </Grid>
       </Section>
@@ -240,76 +242,59 @@ export default function EditDeviceModal({ deviceId, initialRecord, departments =
     (
       <Section title="Device Information" key="device">
         <Grid>
+          <ReadOnlyField label={formatFieldKey('hostname')} value={form?.hostname || ''} />
+          <ReadOnlyField label={formatFieldKey('os')} value={form?.os || ''} />
           <InputField label={formatFieldKey('target_ip')} name="target_ip" value={form?.target_ip || ''} onChange={update} />
-          <label className="field" htmlFor="device-device_type">
-            <span className="field-label">{formatFieldKey('device_type')}</span>
-            <select id="device-device_type" name="device_type" value={form?.device_type || ''} onChange={update}>
-              <option value="">Select device type</option>
-              {deviceTypeOptions.map((option) => <option key={option}>{option}</option>)}
-            </select>
-          </label>
-        </Grid>
-      </Section>
-    ),
-    (
-      <Section title="PO Details" key="po">
-        <Grid>
-          <InputField label={formatFieldKey('po_no')} name="po_no" value={form?.po_no || ''} onChange={update} />
-          <InputField label={formatFieldKey('po_date')} name="po_date" type="date" value={form?.po_date || ''} onChange={update} />
-          <InputField label={formatFieldKey('value')} name="value" value={form?.value || ''} onChange={update} />
-          <InputField label={formatFieldKey('date_of_procurement')} name="date_of_procurement" type="date" value={form?.date_of_procurement || ''} onChange={update} />
+          <InputField label={formatFieldKey('device_type')} name="device_type" value={form?.device_type || ''} onChange={update} disabled={true} />
         </Grid>
       </Section>
     ),
     (
       <Section title="Deployment Details" key="deploy">
         <Grid>
-          <InputField label={formatFieldKey('given_to')} name="given_to" value={form?.given_to || ''} onChange={update} />
-          <InputField label={formatFieldKey('location')} name="location" value={form?.location || ''} onChange={update} />
-          <InputField label={formatFieldKey('date_of_install')} name="date_of_install" type="date" value={form?.date_of_install || ''} onChange={update} />
+
           <TextAreaField label={formatFieldKey('remarks')} name="remarks" value={form?.remarks || ''} onChange={update} rows={3} />
         </Grid>
       </Section>
     ),
     (
-      <Section title="Scanner Data" key="scanner">
-        <p className="scanner-note">These fields are populated automatically by the ITC System Scanner and cannot be edited.</p>
+      <Section title="DS-8 Details" key="ds8">
         <Grid>
-          <ReadOnlyField label={formatFieldKey('hostname')} value={form?.hostname || ''} />
-          <ReadOnlyField label={formatFieldKey('os')} value={form?.os || ''} />
+          <InputField label={formatFieldKey('ds_no')} name="ds_no" value={form?.ds_no || ''} onChange={update} />
+          <InputField label={formatFieldKey('date')} name="date" type="date" value={form?.date || ''} onChange={update} />
         </Grid>
       </Section>
-    ),
+    )
   ];
 
   return (
     createPortal(
       <div className="modal-backdrop modal-overlay" role="presentation" onMouseDown={handleClose}>
         <section className="detail-modal device-modal device-edit-modal modal-content" role="dialog" aria-modal="true" onMouseDown={(event) => event.stopPropagation()}>
-        <div className="view-modal-titlebar device-modal-titlebar">
-          <div className="modal-title">
-            <p className="section-kicker">Edit device</p>
-            <h2>{loading ? 'Loading...' : `Edit Device - ${record?.name || 'Record'} | ${record?.device_type || 'Device'}`}</h2>
-          </div>
-          <button className="icon-button light" type="button" onClick={handleClose} aria-label="Close edit device modal">
-            <X size={20} />
-          </button>
-        </div>
-
-        <form className="view-modal-content device-modal-content device-edit-form" onSubmit={submit}>
-          {loading ? <LoadingSpinner label="Loading device details" /> : null}
-          {serverError ? <div className="alert alert-error">{serverError}</div> : null}
-          {!loading && form ? sections : null}
-
-          <div className="device-modal-footer">
-            <button className="secondary-button" type="button" onClick={handleClose} disabled={saving}>
-              Cancel
-            </button>
-            <button className="download-button device-save-button" type="submit" disabled={saving || !dirty}>
-              {saving ? 'Saving...' : (<><Save size={18} /> Save Changes</>)}
+          <div className="view-modal-titlebar device-modal-titlebar">
+            <div className="modal-title">
+              <p className="section-kicker">Edit device</p>
+              <h2>{loading ? 'Loading...' : `Edit Device - ${record?.name || 'Record'} | ${record?.device_type || 'Device'}`}</h2>
+            </div>
+            <button className="icon-button light" type="button" onClick={handleClose} aria-label="Close edit device modal">
+              <X size={20} />
             </button>
           </div>
-        </form>
+
+          <form className="view-modal-content device-modal-content device-edit-form" onSubmit={submit}>
+            {loading ? <LoadingSpinner label="Loading device details" /> : null}
+            {serverError ? <div className="alert alert-error">{serverError}</div> : null}
+            {!loading && form ? sections : null}
+
+            <div className="device-modal-footer">
+              <button className="secondary-button" type="button" onClick={handleClose} disabled={saving}>
+                Cancel
+              </button>
+              <button className="download-button device-save-button" type="submit" disabled={saving || !dirty}>
+                {saving ? 'Saving...' : (<><Save size={18} /> Save Changes</>)}
+              </button>
+            </div>
+          </form>
         </section>
       </div>,
       document.body,

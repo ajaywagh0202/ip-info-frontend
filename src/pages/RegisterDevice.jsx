@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
-import { CheckCircle2, Clipboard, Download, FolderOpen, Send, TriangleAlert } from 'lucide-react';
-import axiosClient, { API_BASE_URL } from '../api/axiosClient.js';
+import { useEffect, useState } from 'react';
+import { CheckCircle2, Clipboard, Send } from 'lucide-react';
+import axiosClient from '../api/axiosClient.js';
 import InputField from '../components/InputField.jsx';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
 import { formatValue } from '../utils/formatField.js';
@@ -26,10 +26,6 @@ function validate(form) {
     errors.phone = 'Phone number must be exactly 10 digits.';
   }
   return errors;
-}
-
-function getFirstFile(files, extension) {
-  return Array.from(files || []).find((file) => file.name.toLowerCase().endsWith(extension));
 }
 
 async function copyText(text) {
@@ -60,20 +56,14 @@ async function copyText(text) {
 }
 
 export default function RegisterDevice() {
-  const folderInputRef = useRef(null);
   const [form, setForm] = useState(initialForm);
   const [departments, setDepartments] = useState([]);
   const [errors, setErrors] = useState({});
   const [serverError, setServerError] = useState('');
   const [successPayload, setSuccessPayload] = useState(null);
   const [submitting, setSubmitting] = useState(false);
-  const [folderFiles, setFolderFiles] = useState([]);
-  const [folderWarning, setFolderWarning] = useState('');
   const [copied, setCopied] = useState(false);
   const [copyFailed, setCopyFailed] = useState(false);
-
-  const pdfFile = getFirstFile(folderFiles, '.pdf');
-  const jsonFile = getFirstFile(folderFiles, '.json');
 
   useEffect(() => {
     let active = true;
@@ -108,10 +98,6 @@ export default function RegisterDevice() {
     setErrors((current) => ({ ...current, [name]: '' }));
   };
 
-  const handleDownload = () => {
-    window.location.href = `${API_BASE_URL}/api/download/scanner`;
-  };
-
   const copyFolderName = async () => {
     setCopyFailed(false);
     try {
@@ -125,32 +111,25 @@ export default function RegisterDevice() {
     }
   };
 
-  const handleFolderPick = (event) => {
-    const files = Array.from(event.target.files || []);
-    setFolderFiles(files);
-    setFolderWarning('');
-  };
-
   const handleSubmit = async (event) => {
     event.preventDefault();
     setServerError('');
     setSuccessPayload(null);
-    setFolderWarning('');
 
     const nextErrors = validate(form);
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) return;
 
-    if (!folderFiles.length) {
-      folderInputRef.current?.click();
-      setFolderWarning('Please select your Scan_Device folder before submitting.');
-      return;
-    }
+    // if (!folderFiles.length) {
+    //   folderInputRef.current?.click();
+    //   setFolderWarning('Please select your Scan_Device folder before submitting.');
+    //   return;
+    // }
 
-    if (!pdfFile || !jsonFile) {
-      setFolderWarning('Required files not found in selected folder. Please run ITC_System_Scanner_V1.exe first.');
-      return;
-    }
+    // if (!pdfFile || !jsonFile) {
+    //   setFolderWarning('Required files not found in selected folder. Please run ITC_System_Scanner_V1.exe first.');
+    //   return;
+    // }
     
     const payload = new FormData();
     payload.append('name', form.name.trim());
@@ -168,20 +147,27 @@ export default function RegisterDevice() {
       payload.append('serial_number', serialValue);
     }
     payload.append('department', form.dept_name.trim());
-    payload.append('pdf_file', pdfFile);
-    payload.append('json_file', jsonFile);
+    // payload.append('pdf_file', pdfFile);
+    // payload.append('json_file', jsonFile);
 
     setSubmitting(true);
     try {
-      const { data } = await axiosClient.post('/api/register', payload, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      const response = data?.data || data || {};
-      const registrationId = response?._id || response?.id || response?.record_id || `${form.pf_no.trim()}-${form.dsr_no.trim()}`;
-      setSuccessPayload({
-        name: form.name.trim(),
-        registrationId,
-      });
+
+      const encoded = encodeURIComponent(JSON.stringify(form));
+
+      window.location.href = `http://10.31.3.114:5051/?data=${encoded}`;
+
+      // const { data } = await axiosClient.post('/api/register', payload, {
+      //   headers: { 'Content-Type': 'multipart/form-data' },
+      // });
+      // const response = data?.data || data || {};
+      // const registrationId = response?._id || response?.id || response?.record_id || `//${form.pf_no.trim()}-${form.dsr_no.trim()}`;
+      // setSuccessPayload({
+      //   name: form.name.trim(),
+      //   registrationId,
+      // });
+
+      // window.location.href = 'http://10.31.3.114:5051/';
       setForm(initialForm);
     } catch (error) {
       setServerError(error.friendlyMessage || error.message || 'Unable to submit registration.');
@@ -241,7 +227,7 @@ export default function RegisterDevice() {
             <select id="field-department" name="department" value={form.dept_code} onChange={handleChange} aria-invalid={Boolean(errors.dept_code || errors.dept_name)}>
               <option value="">Select department</option>
               {departments.map((department) => (
-                <option key={department.dept_code || department.code || department.deptname} value={department.dept_code || department.code || ''}>
+                <option key={department.dept_code || department.code || department.deptname} value={department.deptname ||  ''}>
                   {department.deptname || department.dept_name || department.name}
                 </option>
               ))}
@@ -275,10 +261,10 @@ export default function RegisterDevice() {
           Additional device details (IP address, OS, hardware info) will be captured automatically via the ITC System Scanner.
         </p> */}
 
-        <button className="download-button" type="button" onClick={handleDownload}>
+        {/* <button className="download-button" type="button" onClick={handleDownload}>
           <Download size={22} />
           Download .exe File
-        </button>
+        </button> */}
 
         <section className="instruction-card">
           <h2>How to Use - Follow These Steps</h2>
@@ -300,7 +286,7 @@ export default function RegisterDevice() {
           </ol>
         </section>
 
-        <section className="folder-card">
+        {/* <section className="folder-card">
           {folderWarning ? <div className="alert alert-warning"><TriangleAlert size={18} />{folderWarning}</div> : null}
           <input
             ref={folderInputRef}
@@ -318,7 +304,7 @@ export default function RegisterDevice() {
             <span className={pdfFile ? 'found' : ''}>PDF {pdfFile ? 'found' : 'missing'}</span>
             <span className={jsonFile ? 'found' : ''}>JSON {jsonFile ? 'found' : 'missing'}</span>
           </div>
-        </section>
+        </section> */}
 
         <button className="primary-button submit-registration" type="submit" disabled={submitting}>
           {submitting ? <LoadingSpinner label="Submitting..." /> : <><Send size={18} /> Register Device</>}

@@ -244,7 +244,7 @@ export default function EditDeviceModal({ deviceId, initialRecord, departments =
         <Grid>
           <ReadOnlyField label={formatFieldKey('hostname')} value={form?.hostname || ''} />
           <ReadOnlyField label={formatFieldKey('os')} value={form?.os || ''} />
-          <InputField label={formatFieldKey('target_ip')} name="target_ip" value={form?.target_ip || ''} onChange={update} disabled={true} />
+          <InputField label={formatFieldKey('target_ip')} name="target_ip" value={form?.target_ip || ''} onChange={update} />
           <InputField label={formatFieldKey('device_type')} name="device_type" value={form?.device_type || ''} onChange={update} disabled={true} />
         </Grid>
       </Section>

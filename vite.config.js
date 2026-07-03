@@ -5,9 +5,11 @@ export default defineConfig({
   plugins: [react()],
   base: '/ip-manager/',
   server: {
+    port: 3000,
+    strictPort: true, 
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: 'http://localhost:8000',
         changeOrigin: true,
         // Preserve the browser's LAN address for /api/ip instead of exposing
         // the Vite-to-backend loopback connection (::1).

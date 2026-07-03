@@ -105,10 +105,12 @@ export default function DeviceRegistrationAssignment() {
   const [isSearching, setIsSearching] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isFetchingDepartments, setIsFetchingDepartments] = useState(false);
+  const [isFetchingDevices, setIsFetchingDevices] = useState(false);
   const [isFetchingIp, setIsFetchingIp] = useState(true);
   const [error, setError] = useState('');
   const [formErrors, setFormErrors] = useState({});
   const [toast, setToast] = useState(null);
+  const [device, setDevice ] =  useState([]);
 
   useEffect(() => {
     let active = true;
@@ -143,7 +145,23 @@ export default function DeviceRegistrationAssignment() {
         if (active) setIsFetchingDepartments(false);
       }
     }
+
+    async function loadDevices(params) {
+       setIsFetchingDevices(true);
+      try {
+        const response = await axiosClient.get('/api/devices');
+        let rows = Array.isArray(response.data) ? response.data : response.data?.data || response.data?.records || [];
+        rows = rows.filter((item) => item.view == 1)
+        if (active) setDevice(rows);
+      } catch (requestError) {
+        if (active) setError(requestError.friendlyMessage || 'Unable to load devices. Please try again.');
+      } finally {
+        if (active) setIsFetchingDevices(false);
+      }
+    }
+
     loadDepartments();
+    loadDevices();
     return () => { active = false; };
   }, [currentView]);
 
@@ -282,12 +300,17 @@ export default function DeviceRegistrationAssignment() {
           <div className="assignment-form-grid">
             <Field label="Serial No." name="serial_no" value={formData.serial_no} readOnly={serialReadOnly} onChange={updateField} />
             <Field label="DSR No." name="dsr_no" value={formData.dsr_no} onChange={updateField} />
-            <Field label="Device Type" name="device_type" value={formData.device_type} onChange={updateField}>{<select value={formData.device_type} onChange={(event) => updateField('device_type', event.target.value)}><option value="">Select device type</option>{DEVICE_TYPES.map((type) => <option key={type}>{type}</option>)}</select>}</Field>
+            <Field label="Device Type" name="device_type" value={formData.device_type} onChange={updateField}>
+              {<select value={formData.device_type} onChange={(event) => updateField('device_type', event.target.value)}>
+                <option value="">Select device type</option>
+                {device.map((type) => <option key={type.device_name}>{type.device_name}</option>)}</select>}
+                </Field>
             <Field label="Name" name="name" value={formData.name} onChange={updateField} />
             <Field label="PF No." name="pf_no" value={formData.pf_no} onChange={updateField} />
             <Field label="Phone" name="phone" value={formData.phone} onChange={updateField} type="tel" />
             <Field label="Designation" name="designation" value={formData.designation} onChange={updateField} />
-            <Field label="Department" name="department" value={formData.department} onChange={updateField}>{<select value={formData.department} onChange={(event) => updateField('department', event.target.value)} disabled={isFetchingDepartments}><option value="">{isFetchingDepartments ? 'Loading departments…' : 'Select department'}</option>{departments.map((department) => { const value = department.dept_code || department.code || department.dept_name || department.deptname || department.name || String(department); const label = department.dept_name || department.deptname || department.name || department.dept_code || String(department); return <option key={value} value={value}>{label}</option>; })}</select>}</Field>
+            <Field label="Department" name="department" value={formData.department} onChange={updateField}>{
+              <select value={formData.department} onChange={(event) => updateField('department', event.target.value)} disabled={isFetchingDepartments}><option value="">{isFetchingDepartments ? 'Loading departments…' : 'Select department'}</option>{departments.map((department) => { const value = department.dept_code || department.code || department.dept_name || department.deptname || department.name || String(department); const label = department.dept_name || department.deptname || department.name || department.dept_code || String(department); return <option key={value} value={value}>{label}</option>; })}</select>}</Field>
             <Field label="Section / Office" name="section_office" value={formData.section_office} onChange={updateField} />
             <Field label="Assigned Date" name="assigned_date" value={formData.assigned_date} onChange={updateField} type="date" />
           </div>

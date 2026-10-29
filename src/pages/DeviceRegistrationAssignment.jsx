@@ -281,7 +281,11 @@ export default function DeviceRegistrationAssignment() {
       {currentView === 'search' ? (
         <div className="assignment-entry-grid">
           <section className="assignment-card assignment-search-card">
-            <div><p className="assignment-kicker">Device lookup</p><h2>Find a device by serial number</h2><p>Enter the serial number printed on the device or asset label.</p></div>
+            <div><p className="assignment-kicker">Device lookup</p>
+            <h2>Find a device by serial number</h2>
+            <p>Enter the serial number printed on the device or asset label.</p>
+            <p>Hiring Device Registration only Admin Can Perform This Action.</p>
+            </div>
             <div className="assignment-search-row">
               <label className="assignment-field"><span>Serial Number Of Device</span><input value={serialSearch} placeholder="Enter serial number" onChange={(event) => setSerialSearch(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') searchDevice(); }} /></label>
               <button className="assignment-button assignment-button--primary" type="button" onClick={searchDevice} disabled={isSearching}>{isSearching ? <LoadingSpinner label="Searching…" /> : <><Search size={18} /> Search</>}</button>

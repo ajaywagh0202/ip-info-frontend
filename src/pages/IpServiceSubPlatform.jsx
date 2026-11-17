@@ -1,15 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { AlertTriangle, ArrowLeft, Check, ChevronDown, Clipboard, Download, ExternalLink, RefreshCw, ServerCrash } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import axiosClient, { API_BASE_URL } from '../api/axiosClient.js';
+import axios from 'axios';
 
-const backendUrl = (path) => `${(API_BASE_URL || window.location.origin).replace(/\/$/, '')}${path}`;
-const scannerAppBaseUrl = String(import.meta.env.VITE_SCANNER_APP_URL || 'http://10.31.3.114:5051').replace(/\/$/, '');
+const scannerAppBaseUrl = String(import.meta.env.VITE_SCANNER_APP_URL || 'http://10.31.3.114:5001').replace(/\/$/, '');
 
-function getHealthUrl(targetIp) {
-  const host = String(targetIp || '').trim().replace(/^https?:\/\//i, '').replace(/\/+$/, '').replace(/:\d+$/, '');
-  return `http://${host}:7979/health`;
-}
+const agentHealthUrl = 'http://10.31.3.114:7979/health';
 
 function DeployCommand({ command, commandId, copiedCommand, onCopy }) {
   const isCopied = copiedCommand === commandId;
@@ -46,7 +42,7 @@ export default function IpServiceSubPlatform() {
   console.log('Scanner app payload:', scannerPayload);
 
   const scannerAppUrl = `${scannerAppBaseUrl}/?data=${encodeURIComponent(JSON.stringify(scannerPayload))}`;
-  const deploymentServerUrl = backendUrl('');
+  const deploymentServerUrl = scannerAppBaseUrl;
   const deployCommands = {
     windowsPowerShell: `powershell -ExecutionPolicy Bypass -Command "(New-Object System.Net.WebClient).DownloadFile('${deploymentServerUrl}/static/bootstrap_client.ps1','$env:TEMP\\itc_boot.ps1'); & '$env:TEMP\\itc_boot.ps1'"`,
     windowsPython: `python -c "import urllib.request,os,sys,subprocess; p=os.path.join(os.environ['TEMP'],'itc_d.py'); open(p,'wb').write(urllib.request.urlopen('${deploymentServerUrl}/static/deploy_client.py').read()); subprocess.call([sys.executable,p,'--server','${deploymentServerUrl}'])"`,
@@ -63,10 +59,9 @@ export default function IpServiceSubPlatform() {
     setAgentState('checking');
     setAgentError('');
     try {
-      const response = await axiosClient.get(getHealthUrl(targetIp), {
+      const response = await axios.get(agentHealthUrl, {
         timeout: 5000,
         signal,
-        headers: { Authorization: 'Bearer ITC2024CLIENT' },
       });
       if (String(response.data?.status || '').toLowerCase() !== 'ok') throw new Error('The scanner agent did not return a healthy status.');
       setAgentState('running');
@@ -182,7 +177,7 @@ export default function IpServiceSubPlatform() {
           <li>
             <span>5</span>
             <div>
-              Click the <b><i class="fa-solid fa-play"></i> Scan This PC</b> button to scan the device details.
+              Click the <b><i className="fa-solid fa-play"></i> Scan This PC</b> button to scan the device details.
             </div>
           </li>
 

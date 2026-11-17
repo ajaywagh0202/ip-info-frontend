@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { BarChart3, Building2, ChevronDown, ClipboardList, FileText, FolderKanban, Hash, Monitor, Server, Settings2, UserRound } from 'lucide-react';
+import { BarChart3, Building2, ChevronDown, ClipboardList, FileText, FolderKanban, Hash, Monitor, Server, Settings2, UserCheck, UserRound } from 'lucide-react';
 import { getAdminProfile, isSuperUser } from '../utils/adminAuth.js';
 
 const topMenuItems = [
   { to: '/admin/analytics', label: 'Analytics Dashboard', icon: BarChart3 },
-  { to: '/device-register', label: 'Register Device', icon: ClipboardList }
+  { to: '/device-register', label: 'Register Device', icon: ClipboardList },
+  { to: '/admin/server-details', label: 'Server Details', icon: Server },
+  { to: '/admin/server-breakdown-logs', label: 'Server Breakdown Logs', icon: FileText },
+  { to: '/admin/user-device-assignments', label: 'Assign Device', icon: UserCheck },
 ];
 
 const menuGroups = [

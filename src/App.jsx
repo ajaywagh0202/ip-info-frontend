@@ -13,6 +13,7 @@ import AnalyticsDashboard from './pages/admin/AnalyticsDashboard.jsx';
 import DeviceDetails from './pages/admin/DeviceDetails.jsx';
 import DeviceList from './pages/admin/DeviceList.jsx';
 import Departments from './pages/admin/Departments.jsx';
+import UserDeviceAssignments from './pages/admin/UserDeviceAssignments.jsx';
 import AddDevices from './pages/AddDevices.jsx';
 
 function AdminPage({ children }) {
@@ -82,6 +83,22 @@ export default function App() {
             element={
               <AdminPage>
                 <DeviceDetails />
+              </AdminPage>
+            }
+          />
+          <Route
+            path="/admin/server-details"
+            element={<AdminPage><DeviceDetails key="server-details" mode="server" /></AdminPage>}
+          />
+          <Route
+            path="/admin/server-breakdown-logs"
+            element={<AdminPage><DeviceDetails key="server-breakdown-logs" mode="breakdown" /></AdminPage>}
+          />
+          <Route
+            path="/admin/user-device-assignments"
+            element={
+              <AdminPage>
+                <UserDeviceAssignments />
               </AdminPage>
             }
           />

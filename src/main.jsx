@@ -8,7 +8,10 @@ import 'ag-grid-community/styles/ag-theme-quartz.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <BrowserRouter basename="/ip-manager">
+    <BrowserRouter
+      basename="/ip-manager"
+      future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+    >
       <App />
     </BrowserRouter>
   </React.StrictMode>,

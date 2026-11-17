@@ -23,7 +23,7 @@
 .ip-service-page {
   --ip-navy: #1a237e;
   --ip-navy-dark: #11185f;
-  --ip-orange: #f57c00;
+  --ip-orange: #00c986;
   --ip-line: #d9def1;
   --ip-text: #17233c;
   --ip-muted: #61708a;
@@ -123,7 +123,7 @@
 .ip-button--primary { color: #fff; background: var(--ip-navy); }
 .ip-button--primary:hover:not(:disabled) { background: var(--ip-navy-dark); }
 .ip-button--offline, .ip-button--download { color: #fff; background: var(--ip-orange); }
-.ip-button--offline:hover:not(:disabled), .ip-button--download:hover { background: #cf6500; }
+.ip-button--offline:hover:not(:disabled), .ip-button--download:hover { background: #01d169; }
 .ip-button--secondary { color: var(--ip-navy); border-color: #abb5d5; background: #fff; }
 .ip-scan-actions { align-items: center; }
 .ip-scan-button-row { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 11px; }
@@ -198,7 +198,7 @@
 /* Device registration and assignment */
 .assignment-page {
   --assignment-navy: #1a237e;
-  --assignment-orange: #f57c00;
+  --assignment-orange: #00cc77;
   display: grid;
   gap: 20px;
   max-width: 1080px;
@@ -244,6 +244,217 @@
 .assignment-text-button { border: 0; padding: 7px 0; color: var(--assignment-navy); background: transparent; cursor: pointer; font-weight: 850; }
 .assignment-status { display: inline-flex; align-items: center; gap: 7px; border: 1px solid #bce5cc; border-radius: 999px; padding: 8px 11px; color: #12643d; background: #e7f7ee; font-size: .82rem; font-weight: 850; white-space: nowrap; }
 .assignment-readonly-card { border-top-color: #158255; }.assignment-readonly-grid { margin-top: -2px; }.assignment-readonly-field { min-width: 0; border: 1px solid #dbe0eb; border-radius: 8px; padding: 12px; background: #eef1f5; }.assignment-readonly-field span { display: block; color: #65728a; font-size: .72rem; font-weight: 850; letter-spacing: .02em; text-transform: uppercase; }.assignment-readonly-field strong { display: block; margin-top: 6px; overflow-wrap: anywhere; color: #344158; font-size: .93rem; }
+
+/* Admin user-device assignment */
+.admin-assignment-page {
+  align-content: start;
+}
+
+.admin-assignment-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.85fr) minmax(340px, 1fr);
+  align-items: start;
+  gap: 20px;
+}
+
+.admin-assignment-panel {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+  border: 1px solid #d9def1;
+  border-radius: 8px;
+  padding: clamp(16px, 2vw, 22px);
+  background: #fff;
+  box-shadow: 0 12px 30px rgba(0, 53, 128, .08);
+}
+
+.admin-assignment-panel--grid {
+  min-height: 620px;
+}
+
+.admin-assignment-panel-heading,
+.admin-assignment-form-actions {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.admin-assignment-panel-heading h2 {
+  margin: 0;
+  color: var(--rail-blue);
+}
+
+.admin-assignment-panel-heading svg {
+  flex: 0 0 auto;
+  color: var(--rail-orange);
+}
+
+.admin-assignment-count-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  border: 1px solid #c4d9f5;
+  border-radius: 999px;
+  padding: 0 12px;
+  color: var(--rail-blue);
+  background: #eef6ff;
+  font-size: .82rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.admin-assignment-grid {
+  height: calc(100vh - 334px);
+  min-height: 470px;
+}
+
+.admin-assignment-grid .ag-root-wrapper {
+  border-radius: 8px;
+}
+
+.admin-assignment-grid .ag-header {
+  border-bottom: 2px solid var(--rail-orange);
+  background: var(--rail-blue);
+}
+
+.admin-assignment-grid .ag-header-row:not(.ag-header-row-column-filter) .ag-header-cell,
+.admin-assignment-grid .ag-header-row:not(.ag-header-row-column-filter) .ag-header-group-cell {
+  background: var(--rail-blue);
+}
+
+.admin-assignment-grid .ag-header-cell,
+.admin-assignment-grid .ag-header-group-cell {
+  color: #fff;
+  font-weight: 900;
+}
+
+.admin-assignment-grid .ag-header-row-column-filter .ag-header-cell {
+  color: var(--ink);
+  background: #f7faff;
+}
+
+.admin-assignment-grid .ag-floating-filter {
+  background: #f7faff;
+  border-bottom: 1px solid #d7dfec;
+}
+
+.admin-assignment-grid .ag-floating-filter .ag-input-field-input,
+.admin-assignment-grid .ag-floating-filter input {
+  min-height: 28px;
+  border: 1px solid #b8c8e5 !important;
+  border-radius: 6px;
+  color: var(--ink) !important;
+  background: #fff !important;
+  font-weight: 700;
+}
+
+.admin-assignment-grid .ag-row-odd {
+  background: #f7faff;
+}
+
+.admin-assignment-grid .ag-row-hover {
+  background: #fff8eb;
+}
+
+.admin-assignment-status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 78px;
+  min-height: 28px;
+  border-radius: 999px;
+  padding: 0 10px;
+  font-size: .78rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.admin-assignment-status-badge--active {
+  border: 1px solid #bce5cc;
+  color: #12643d;
+  background: #e7f7ee;
+}
+
+.admin-assignment-status-badge--inactive {
+  border: 1px solid #f0aaa5;
+  color: #b42318;
+  background: #fff0ed;
+}
+
+.admin-assignment-remove-button {
+  min-width: 98px;
+}
+
+.admin-assignment-form {
+  display: grid;
+  gap: 16px;
+}
+
+.admin-assignment-form .field {
+  min-width: 0;
+}
+
+.admin-assignment-form input {
+  font-weight: 700;
+}
+
+.admin-assignment-form-actions {
+  justify-content: flex-end;
+  border-top: 1px solid #e1e5f0;
+  padding-top: 2px;
+}
+
+.admin-assignment-submit-button {
+  width: 100%;
+  min-height: 48px;
+}
+
+.admin-assignment-lookup-details {
+  display: grid;
+  gap: 8px;
+  margin: 2px 0 0;
+}
+
+.admin-assignment-lookup-details div {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr);
+  gap: 8px;
+  min-width: 0;
+  border: 1px solid #e1e9f4;
+  border-radius: 8px;
+  padding: 9px 10px;
+  background: #f8fbff;
+}
+
+.admin-assignment-lookup-details dt {
+  color: var(--muted);
+  font-size: .78rem;
+  font-weight: 900;
+}
+
+.admin-assignment-lookup-details dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: #243651;
+  font-weight: 850;
+}
+
+.admin-assignment-remove-modal {
+  width: min(100%, 430px);
+  gap: 16px;
+  border-top: 4px solid #D32F2F;
+}
+
+@media (max-width: 1100px) {
+  .admin-assignment-split {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-assignment-grid {
+    height: 560px;
+  }
+}
 
 /* Add / edit device registration */
 .add-device-page {
@@ -1967,6 +2178,22 @@ code {
   gap: 8px;
 }
 
+.device-row-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 8px;
+  height: 100%;
+}
+
+.device-row-actions .grid-action-button {
+  flex: 0 0 auto;
+  height: 32px;
+  min-height: 32px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
 .grid-action-button.orange {
   color: var(--rail-orange);
   border-color: #ffcfad;
@@ -2982,3 +3209,24 @@ code {
   .device-management-actions .primary-button { width: 100%; }
   .department-management-actions .primary-button { width: 100%; }
 }
+.server-details-feature { min-width: 0; }
+.device-detail-navigation { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 22px; border-bottom: 1px solid var(--line); background: #f8fbff; }
+.device-view-modal.modal-content { grid-template-rows: auto auto minmax(0, 1fr); gap: 0; max-height: 90dvh; overflow: hidden; }
+.device-modal [hidden] { display: none !important; }
+.device-modal-content > div > .device-section + .device-section { margin-top: 16px; }
+.server-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0; }
+.server-fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.server-details-feature summary { cursor: pointer; }
+.server-details-feature summary h3 { display: inline; }
+.server-details-feature .field { min-width: 0; }
+.server-details-feature .field input,
+.server-details-feature .field select,
+.server-details-feature .field textarea { width: 100%; box-sizing: border-box; }
+.server-details-feature dd { white-space: pre-wrap; overflow-wrap: anywhere; }
+.server-table-scroll { overflow-x: auto; max-width: 100%; margin-top: 16px; }
+.server-log-table { border-collapse: collapse; width: 100%; font-size: 13px; }
+.server-log-table th, .server-log-table td { padding: 10px; text-align: left; border-bottom: 1px solid #dce3ed; min-width: 120px; vertical-align: top; overflow-wrap: anywhere; }
+.server-log-table th { background: #f3f6fb; }
+.server-log-table caption { text-align: left; padding: 8px 0; }
+.server-details-feature button:disabled { opacity: .55; cursor: not-allowed; }
+.server-details-feature :focus-visible { outline: 2px solid #2563eb; outline-offset: 3px; }

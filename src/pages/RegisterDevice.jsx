@@ -155,7 +155,7 @@ export default function RegisterDevice() {
 
       const encoded = encodeURIComponent(JSON.stringify(form));
 
-      window.location.href = `http://10.31.3.114:5051/?data=${encoded}`;
+      window.location.href = `http://10.31.3.114:5001/?data=${encoded}`;
 
       // const { data } = await axiosClient.post('/api/register', payload, {
       //   headers: { 'Content-Type': 'multipart/form-data' },
@@ -167,7 +167,7 @@ export default function RegisterDevice() {
       //   registrationId,
       // });
 
-      // window.location.href = 'http://10.31.3.114:5051/';
+      // window.location.href = 'http://10.31.3.114:5001/';
       setForm(initialForm);
     } catch (error) {
       setServerError(error.friendlyMessage || error.message || 'Unable to submit registration.');

@@ -8,8 +8,6 @@ const topMenuItems = [
   { to: '/device-register', label: 'Register Device', icon: ClipboardList },
   { to: '/admin/server-details', label: 'Server Details', icon: Server },
   { to: '/admin/server-breakdown-logs', label: 'Server Breakdown Logs', icon: FileText },
-  { to: '/admin/server-details', label: 'Server Details', icon: Server },
-  { to: '/admin/server-breakdown-logs', label: 'Server Breakdown Logs', icon: FileText },
   { to: '/admin/user-device-assignments', label: 'Assign Device', icon: UserCheck },
 ];
 

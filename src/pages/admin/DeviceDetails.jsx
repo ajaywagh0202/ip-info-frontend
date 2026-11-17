@@ -12,10 +12,11 @@ import Toast from '../../components/Toast.jsx';
 import ViewDeviceModal from '../../components/ViewDeviceModal.jsx';
 import EditDeviceModal from '../../components/EditDeviceModal.jsx';
 import { defaultGridColDef } from './ReportColumns.jsx';
+import { isServerDevice } from '../../utils/serverDetails.js';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
-const deviceTypeOptions = ['All Types', 'Desktop', 'Laptop', 'Server', 'Printer', 'Network Switch', 'Other'];
+const deviceTypeOptions = ['All Types', 'Desktop', 'Laptop', 'Server', 'NAS Server', 'Printer', 'Network Switch', 'Other'];
 
 function getDeviceId(record) {
   return record?.id || record?._id || record?.device_id || record?.record_id;
@@ -42,7 +43,10 @@ function buildParams(filters, profile, userType) {
   return params;
 }
 
-export default function DeviceDetails() {
+export default function DeviceDetails({ mode = 'device' }) {
+  const serverOnly = mode === 'server' || mode === 'breakdown';
+  const pageTitle = mode === 'server' ? 'Server Details' : mode === 'breakdown' ? 'Server Breakdown Logs' : 'Device Details';
+  const availableDeviceTypes = serverOnly ? ['All Types', 'Server', 'NAS Server'] : deviceTypeOptions;
   const profile = getAdminProfile();
   const userType = getUserType();
   const [devices, setDevices] = useState([]);
@@ -62,6 +66,7 @@ export default function DeviceDetails() {
   const [error, setError] = useState('');
   const [toast, setToast] = useState(null);
   const [viewId, setViewId] = useState('');
+  const [viewPanel, setViewPanel] = useState('device');
   const [editId, setEditId] = useState('');
   const [selectedRecord, setSelectedRecord] = useState(null);
 
@@ -85,14 +90,15 @@ export default function DeviceDetails() {
     try {
       const params = buildParams(nextFilters, profile, userType);
       const { data } = await axiosInstance.get('/api/admin/device-details', { params });
-      setDevices(extractRows(data).map(normalizeDeviceRow));
+      const rows = extractRows(data);
+      setDevices((serverOnly ? rows.filter(row => isServerDevice(row.device_type)) : rows).map(normalizeDeviceRow));
     } catch (err) {
       setDevices([]);
       setError(err.friendlyMessage || 'Unable to load device details.');
     } finally {
       setLoading(false);
     }
-  }, [appliedFilters, profile, userType]);
+  }, [appliedFilters, profile, userType, serverOnly]);
 
   useEffect(() => {
     loadDepartments();
@@ -116,15 +122,26 @@ export default function DeviceDetails() {
       sortable: false,
       filter: false,
       floatingFilter: false,
-      minWidth: 180,
+      width: serverOnly ? 230 : 340,
+      minWidth: serverOnly ? 230 : 340,
+      pinned: 'right',
+      cellStyle: { display: 'flex', alignItems: 'center', lineHeight: 'normal' },
       cellRenderer: ({ data }) => {
+        if (serverOnly) return (
+          <div className="device-row-actions">
+            <button className="grid-action-button blue" type="button" onClick={() => { setViewPanel(mode); setSelectedRecord(data); setViewId(getDeviceId(data)); }}>
+              <Eye size={15} />{mode === 'breakdown' ? 'Open Breakdown Logs' : 'Open Server Details'}
+            </button>
+          </div>
+        );
         const canEdit = userType === 0 || String(data?.dept_code || '') === String(profile.dept_code || '');
         return (
-          <div className="device-actions">
-            <button className="grid-action-button blue" type="button" onClick={() => { setSelectedRecord(data); setViewId(getDeviceId(data)); }}>
+          <div className="device-row-actions">
+            <button className="grid-action-button blue" type="button" onClick={() => { setViewPanel('device'); setSelectedRecord(data); setViewId(getDeviceId(data)); }}>
               <Eye size={15} />
               View
             </button>
+            {isServerDevice(data?.device_type) ? <button className="grid-action-button blue" type="button" onClick={() => { setViewPanel('server'); setSelectedRecord(data); setViewId(getDeviceId(data)); }}>Server / Logs</button> : null}
             <button
               className={`grid-action-button orange${canEdit ? '' : ' disabled'}`}
               type="button"
@@ -143,7 +160,7 @@ export default function DeviceDetails() {
         );
       },
     },
-  ], [profile.dept_code, userType]);
+  ], [profile.dept_code, userType, mode, serverOnly]);
 
   const handleApply = () => {
     setAppliedFilters(filters);
@@ -178,7 +195,10 @@ export default function DeviceDetails() {
       <div className="page-heading-row">
         <div>
           <p className="section-kicker">Admin report</p>
-          <h1>Device Details</h1>
+          <h1>{pageTitle}</h1>
+          <p>{serverOnly
+            ? mode === 'breakdown' ? 'Select a Server or NAS Server to view, add, edit or restore breakdown incidents.' : 'Select a Server or NAS Server to view and update its details.'
+            : <>For Server and NAS Server devices, select <strong>Server / Logs</strong> to manage server details and breakdown incidents.</>}</p>
           <p>{userType === 0 ? 'All Departments' : `Department: ${profile.dept_name || 'Department'}`}</p>
         </div>
       </div>
@@ -203,7 +223,7 @@ export default function DeviceDetails() {
               <label className="field">
                 <span className="field-label">Device Type</span>
                 <select value={filters.device_type} onChange={(event) => setFilters((current) => ({ ...current, device_type: event.target.value }))}>
-                  {deviceTypeOptions.map((option) => <option key={option}>{option}</option>)}
+                  {availableDeviceTypes.map((option) => <option key={option} value={option}>{serverOnly && option === 'All Types' ? 'Server and NAS Server' : option}</option>)}
                 </select>
               </label>
               {userType === 0 ? (
@@ -243,12 +263,13 @@ export default function DeviceDetails() {
       </section>
 
       {error ? <div className="alert alert-error">{error}</div> : null}
-      {loading ? <LoadingSpinner label="Loading device details" /> : null}
+      {loading ? <LoadingSpinner label={`Loading ${pageTitle.toLowerCase()}`} /> : null}
 
       {!loading && !error ? (
         <div className="ag-theme-quartz grid-shell device-grid">
           <AgGridReact
             rowData={devices}
+            overlayNoRowsTemplate={serverOnly ? '<span>No Server or NAS Server devices match these filters.</span>' : undefined}
             columnDefs={columnDefs}
             defaultColDef={defaultGridColDef}
             pagination
@@ -263,6 +284,7 @@ export default function DeviceDetails() {
 
       {viewId ? (
         <ViewDeviceModal
+          initialPanel={viewPanel}
           deviceId={viewId}
           initialRecord={selectedRecord}
           onClose={() => {

@@ -87,6 +87,22 @@ export default function App() {
             }
           />
           <Route
+            path="/admin/server-details"
+            element={<AdminPage><DeviceDetails key="server-details" mode="server" /></AdminPage>}
+          />
+          <Route
+            path="/admin/server-breakdown-logs"
+            element={<AdminPage><DeviceDetails key="server-breakdown-logs" mode="breakdown" /></AdminPage>}
+          />
+          <Route
+            path="/admin/server-details"
+            element={<AdminPage><DeviceDetails key="server-details" mode="server" /></AdminPage>}
+          />
+          <Route
+            path="/admin/server-breakdown-logs"
+            element={<AdminPage><DeviceDetails key="server-breakdown-logs" mode="breakdown" /></AdminPage>}
+          />
+          <Route
             path="/admin/user-device-assignments"
             element={
               <AdminPage>

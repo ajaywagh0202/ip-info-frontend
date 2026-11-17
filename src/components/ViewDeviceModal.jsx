@@ -1,22 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import axiosInstance from '../utils/axiosInstance.js';
 import LoadingSpinner from './LoadingSpinner.jsx';
 import formatDate from '../utils/formatDate.js';
 import { formatFieldKey, formatValue } from '../utils/formatField.js';
-
-function getJsonData(record) {
-  const value = record?.json_data || record?.jsonData || record?.data || {};
-  if (typeof value === 'string') {
-    try {
-      return JSON.parse(value);
-    } catch {
-      return {};
-    }
-  }
-  return value && typeof value === 'object' ? value : {};
-}
+import { getAdminProfile, getUserType } from '../utils/adminAuth.js';
+import { registeredServerId, isServerDevice } from '../utils/serverDetails.js';
+import ServerDetails from './ServerDetails.jsx';
 
 function renderValue(key, value) {
   if (value === null || value === undefined || value === '') return '—';
@@ -50,10 +41,24 @@ function DetailSection({ title, items, children }) {
   );
 }
 
-export default function ViewDeviceModal({ deviceId, initialRecord, onClose }) {
+export default function ViewDeviceModal({ deviceId, initialRecord, onClose, initialPanel = 'device' }) {
   const [record, setRecord] = useState(initialRecord || null);
   const [loading, setLoading] = useState(Boolean(deviceId));
   const [error, setError] = useState('');
+  const [guard, setGuard] = useState({ dirty: false, busy: false });
+  const [panel, setPanel] = useState(initialPanel);
+  const modalRef = useRef(null);
+  const handleClose = useCallback(() => {
+    if (guard.busy) return;
+    if (guard.dirty && !window.confirm('Discard unsaved server or incident changes?')) return;
+    onClose();
+  }, [guard, onClose]);
+  const profile = getAdminProfile();
+  const userType = getUserType();
+  const serverId = registeredServerId(record);
+  const showServerSections = isServerDevice(record?.device_type || record?.register_device?.device_type);
+  const activePanel = showServerSections ? panel : 'device';
+  const canEditServer = userType === 0 || (userType === 1 && Boolean(profile.dept_code) && String(record?.dept_code || record?.register_device?.dept_code || '').toLowerCase() === String(profile.dept_code).toLowerCase());
 
   useEffect(() => {
     if (!deviceId) return undefined;
@@ -78,13 +83,26 @@ export default function ViewDeviceModal({ deviceId, initialRecord, onClose }) {
 
   useEffect(() => {
     const onKeyDown = (event) => {
-      if (event.key === 'Escape') onClose();
+      if (event.key === 'Escape') handleClose();
+      if (event.key === 'Tab') {
+        const elements = [...(modalRef.current?.querySelectorAll('button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), summary, [tabindex="0"]') || [])].filter(element => element.getClientRects().length);
+        const first = elements[0];
+        const last = elements.at(-1);
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+      }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [onClose]);
+  }, [handleClose]);
 
-  const jsonData = getJsonData(record);
+  useEffect(() => {
+    const previous = document.activeElement;
+    modalRef.current?.querySelector('button')?.focus();
+    return () => previous?.focus();
+  }, []);
+
+
   const user = [
     { key: 'name', label: formatFieldKey('name'), value: record?.name },
     { key: 'phone', label: formatFieldKey('phone'), value: record?.phone },
@@ -127,44 +145,39 @@ export default function ViewDeviceModal({ deviceId, initialRecord, onClose }) {
   ];
 
   return createPortal(
-    <div className="modal-backdrop modal-overlay" role="presentation" onMouseDown={onClose}>
-      <section className="detail-modal device-modal modal-content" role="dialog" aria-modal="true" onMouseDown={(event) => event.stopPropagation()}>
+    <div className="modal-backdrop modal-overlay" role="presentation" onMouseDown={handleClose}>
+      <section ref={modalRef} className="detail-modal device-modal device-view-modal modal-content" role="dialog" aria-modal="true" aria-label="Device details" onMouseDown={(event) => event.stopPropagation()}>
         <div className="view-modal-titlebar device-modal-titlebar">
           <div className="modal-title">
             <p className="section-kicker">Device details</p>
             <h2>{loading ? 'Loading...' : `Device Details - ${record?.name || 'Record'} | ${record?.device_type || 'Device'}`}</h2>
           </div>
-          <button className="icon-button light" type="button" onClick={onClose} aria-label="Close device details modal">
+          <button className="icon-button light" type="button" onClick={handleClose} disabled={guard.busy} aria-label="Close device details modal">
             <X size={20} />
           </button>
         </div>
 
+        <nav className="device-detail-navigation" aria-label="Device detail sections">
+          {[['device', 'Device Details'], ...(showServerSections ? [['server', 'Server Details'], ['breakdown', 'Breakdown Logs']] : [])].map(([key, label]) => (
+            <button key={key} type="button" className={activePanel === key ? 'download-button' : 'secondary-button'} aria-pressed={activePanel === key} disabled={guard.busy} onClick={() => setPanel(key)}>{label}</button>
+          ))}
+        </nav>
         <div className="view-modal-content device-modal-content">
           {loading ? <LoadingSpinner label="Loading device details" /> : null}
           {error ? <div className="alert alert-error">{error}</div> : null}
           {!loading && record ? (
             <>
+              <div hidden={activePanel !== 'device'}>
               <DetailSection title="User Information" items={user} />
               <DetailSection title="Purchase Order (PO) Details" items={po} />
               <DetailSection title="Dead Stock Register (DSR) Details" items={dsr} />
               <DetailSection title="Device Information" items={device} />
               <DetailSection title="DS-8 Details" items={ds} />
               <DetailSection title="Deployment Details" items={deployment} />
-              {/* {jsonData && Object.keys(jsonData).length ? (
-                <section className="device-section">
-                  <h3>Scanner Data</h3>
-                  <dl className="device-detail-grid">
-                    {Object.entries(jsonData)
-                      .filter(([, value]) => value !== null && value !== undefined && value !== '')
-                      .map(([key, value]) => (
-                        <div key={key}>
-                          <dt>{formatFieldKey(key)}</dt>
-                          <dd>{renderValue(key, value)}</dd>
-                        </div>
-                      ))}
-                  </dl>
-                </section>
-              ) : null} */}
+              </div>
+              {showServerSections ? <div hidden={activePanel === 'device'}>
+                {!error && serverId ? <ServerDetails key={serverId} serverId={serverId} canEdit={canEditServer} onGuardChange={setGuard} activeSection={activePanel} /> : !error ? <DetailSection title={activePanel === 'breakdown' ? 'Breakdown Logs' : 'Server Details'}><p>No registered-device ID is available. Register this device before managing server details or breakdown incidents.</p></DetailSection> : null}
+              </div> : null}
             </>
           ) : null}
         </div>
